@@ -1,0 +1,290 @@
+<!doctype html>
+<html class="no-js" lang="">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            overflow: hidden;
+        }
+    </style>
+
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const c = canvas.getContext('2d');
+
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+
+        const pi = Math.PI;
+
+        canvas.width = w;
+        canvas.height = h;
+
+        c.translate(canvas.width / 2, canvas.height / 2);
+
+//FUNCTIONS ---------------------------------
+function Point (x, y){
+    this.x = x;
+    this.y = y;
+}
+
+
+function Ractangle (centerPoint, sideLength) {
+    this.centerPoint = centerPoint;
+    this.centerPoint.x = centerPoint.x;
+    this.centerPoint.y = centerPoint.y;
+    this.sideLength = sideLength;
+}
+
+
+Ractangle.prototype.draw = function(){
+    c.beginPath();
+    c.rect(this.centerPoint.x - this.sideLength / 2,  this.centerPoint.y - this.sideLength / 2, this.sideLength, this.sideLength);
+    c.stroke();
+}
+
+
+function clearCanvas(backgroundColor){
+    c.fillStyle = backgroundColor;
+    c.fillRect(-w/2, -h/2, w, h);
+}
+
+
+function generateRecangleCenters(dist, lineWidth){
+    let centers = [];
+    let n = w / (dist * 1.5);
+    let m = h / (dist * 1.5);
+    let point;
+
+    for(let j = 0; j < m; j++){
+        for(let i = 0; i < n; i++){
+            point = new Point(i * (dist + lineWidth * 1.03) + dist, j * (dist + lineWidth * 1.03) + dist);
+            centers.push(point);
+        }
+    }
+
+    return centers;
+}
+
+
+function drawRectangles(centerList, width, color, strokeWidth, degree) {
+    let rectangle;
+
+    c.lineWidth = strokeWidth;
+    c.strokeStyle = color;
+
+    nestedRectangleLength = width / strokeWidth / 2;
+
+    for(let i = 0; i < centerList.length; i++) {
+
+        for (let j = 0; j <= nestedRectangleLength ; j++) {
+
+            c.translate(centerList[i].x, centerList[i].y);
+            c.rotate( (Math.PI / 180) * degree * (j + 1));
+            c.translate(-centerList[i].x, -centerList[i].y); 
+            
+            rectangle = new Ractangle (centerList[i], width - (strokeWidth * 2 * j));
+            rectangle.draw();
+
+            c.translate(centerList[i].x, centerList[i].y);
+            c.rotate(-1 * (Math.PI / 180) * degree * (j + 1)); 
+            c.translate(-centerList[i].x, -centerList[i].y); 
+
+        }
+    }
+}
+
+function drawTriangles(p1, p2, p3) {
+
+    generateColor();
+    c.beginPath();
+    c.moveTo(p1.x, p1.y);
+    c.lineTo(p2.x, p2.y);
+    c.lineTo(p3.x, p3.y);
+    c.lineTo(p1.x, p1.y);
+    c.stroke();
+    c.closePath();
+}
+
+
+function generateColor() {
+    var red = Math.round(Math.random() * 255);
+    var green = Math.round(Math.random() * 255);
+    var blue = Math.round(Math.random() * 255);
+    var opacity = Math.random();
+
+    return 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + opacity + ')';
+}
+
+
+function getDistance(p1, p2) {
+    return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2))
+}
+
+
+function getMousePos(canvas, evt) {
+    let rect = canvas.getBoundingClientRect();
+
+    //return new Point(evt.clientX - rect.left, evt.clientY - rect.top);
+    return new Point(evt.clientX, evt.clientY);
+};
+
+
+function getMousePosToCenterRatio(mousePos, centerPoint, maxDistFromCenter) {
+    let mousePosDistFromCenter = getDistance(mousePos, centerPoint);
+
+    return mousePosDistFromCenter / maxDistFromCenter;
+};
+
+
+
+
+//PARAMETERS -------------------------------
+let centerPoint = new Point(w/2, h/2);
+let backgroundColor = '#1d211e';
+
+let rectangleColor = 'rgba(9, 70, 155, 0.4)';
+let rectangleStrokeW = 6;
+let rectangleW = rectangleStrokeW * 2 * 10;
+
+let maxDistFromCenter = getDistance(new Point(0, 0), centerPoint);
+
+clearCanvas(backgroundColor);
+
+let centerList = generateRecangleCenters(rectangleW, rectangleStrokeW);
+
+
+//drawRectangles(centerList, rectangleW, rectangleColor, rectangleStrokeW, 0);
+
+
+
+//MAIN FUNCTION -----------------------------  
+
+window.onresize = function() {
+    w = window.innerWidth;
+    h = window.innerHeight;
+
+
+    canvas.width = w;
+    canvas.height = h;
+
+    centerPoint = new Point(w/2, h/2);
+    maxDistFromCenter = getDistance(new Point(0, 0), centerPoint);
+
+    clearCanvas(backgroundColor);
+
+    // centerList = generateRecangleCenters(rectangleW, rectangleStrokeW);
+
+
+    // drawRectangles(centerList, rectangleW, rectangleColor, rectangleStrokeW, 0);
+};  
+
+
+canvas.addEventListener('mousemove', function(evt) {
+
+    //backgroundColor = generateColor();
+
+    //clearCanvas(backgroundColor);
+    
+    let mousePos = getMousePos(canvas, evt);
+
+    console.log('mouse x ' + mousePos.x);
+    console.log('mouse y ' + mousePos.y);
+
+    mousePos.x -= w/2;
+    mousePos.y -= h/2;
+
+    //let mousePosToCenterRatio = getMousePosToCenterRatio(mousePos, centerPoint, maxDistFromCenter);
+    //
+    c.fillStyle = generateColor();
+
+    //c.scale(-1, -1);
+    //RED
+    c.fillStyle = 'rgba(255, 0, 0, 1)';
+
+
+    c.beginPath();
+    c.moveTo(mousePos.x + 10, mousePos.y + 10);
+    c.lineTo(mousePos.x + 60, mousePos.y + 50);
+    c.lineTo(mousePos.x + 110, mousePos.y + 50);
+    c.lineTo(mousePos.x + 10, mousePos.y + 10);
+    c.fill();
+    c.closePath();
+
+
+    //----------------------------
+    // flip context horizontally
+    //----------------------------
+    
+
+    c.scale(-1, 1);
+    //BLUE
+    c.fillStyle = 'rgba(0, 0, 255, 1)';
+
+    c.beginPath();
+    c.moveTo(mousePos.x + 10, mousePos.y + 10);
+    c.lineTo(mousePos.x + 60, mousePos.y + 50);
+    c.lineTo(mousePos.x + 110, mousePos.y + 50);
+    c.lineTo(mousePos.x + 10, mousePos.y + 10);
+    c.fill();
+    c.closePath();
+
+    //----------------------------
+    // flip context vertically
+    //----------------------------
+    
+    c.scale(1, -1);
+
+    //PURPLE
+    c.fillStyle = 'rgba(255, 0, 255, 1)';
+
+    c.beginPath();
+    c.moveTo(mousePos.x + 10, mousePos.y + 10);
+    c.lineTo(mousePos.x + 60, mousePos.y + 50);
+    c.lineTo(mousePos.x + 110, mousePos.y + 50);
+    c.lineTo(mousePos.x + 10, mousePos.y + 10);
+    c.fill();
+    c.closePath();
+
+
+    //----------------------------
+    // flip context horizontally
+    //----------------------------
+    
+
+    c.scale(-1, 1);
+
+    //WHITE
+    c.fillStyle = 'rgba(255, 255, 255, 1)';
+
+    c.beginPath();
+    c.moveTo(mousePos.x + 10, mousePos.y + 10);
+    c.lineTo(mousePos.x + 60, mousePos.y + 50);
+    c.lineTo(mousePos.x + 110, mousePos.y + 50);
+    c.lineTo(mousePos.x + 10, mousePos.y + 10);
+    c.fill();
+    c.closePath();
+
+    c.scale(1, -1);
+
+}, false);      
+
+</script>
+
+</body>
+</html>
